@@ -1,0 +1,105 @@
+<template>
+  <div class="setting-block">
+    	<div class="setting-title font-16 fw-500">Profile</div>
+    	<div class="setting-body white-bg-color">
+            <form @submit.prevent="update" class="custom-form">
+				<div class="row">
+					<div class="col-md-6">
+						<alert-success :form="form">
+							Profile information updated successfully
+						</alert-success>
+						<div class="form-group">
+							<base-input :form="form" field="name" v-model="form.name" placeholder="fullname"></base-input>
+						</div>
+
+						<div class="form-group">
+							<base-input :form="form" field="tagline" v-model="form.tagline" placeholder="tagLine"></base-input>
+						</div>			
+
+						<div class="form-group">
+							<base-gmap 
+								@address-response="handleAddress"
+								:initialValue="form.formatted_address"
+							>
+							</base-gmap>
+						</div>
+
+						<div class="form-group">
+							<base-textarea :form="form" :rows="4" field="about" v-model="form.about" placeholder="Please enter some information about yourself"></base-textarea>
+						</div>
+
+						<div class="form-group custom-control custom-checkbox">
+							<input 
+								class="custom-control-input" 
+								type="checkbox" 
+								id="available_to_hire" 
+								v-model="form.available_to_hire"
+							>
+							<label class="custom-control-label" for="available_to_hire" value="true">Available to hire?</label>					
+						</div>
+
+						<div class="text-right">
+							<base-button :loading="form.busy">
+								Update profile
+							</base-button>
+						</div>
+
+					</div>
+				</div>
+			</form>
+        </div>    
+    </div>
+</template>
+
+<script>
+export default {
+	data(){
+		return{
+			form: this.$vform({
+				name: '',
+				about: '',
+				tagLine: '',
+				formatted_address: '',
+				location: {},
+				available_to_hire: false
+			})
+		}
+	},	
+	methods: {
+		update(){
+			console.log("update");			
+			this.form.put(`/settings/profile`)
+				.then(res => console.log(res))
+				.catch(e => console.log(e))
+		}, 
+
+		handleAddress(data){
+			console.log("data::: ", data);
+			this.form.formatted_address = data.formatted_address;
+			this.form.location.latitude = data.latitude;
+			this.form.location.longitude = data.longitude;
+		}
+	},
+
+	mounted(){
+		Object.keys(this.form).forEach(k => {
+			if (this.$auth.user.hasOwnProperty(k)) {
+				this.form[k] = this.$auth.user[k]
+			}
+		});
+
+		if (this.$auth.user.location) {
+			this.form.location = {
+				longitude: this.$auth.user.location.coordinates[0],
+				latitude: this.$auth.user.location.coordinates[1]
+			};
+		} else {
+			this.form.location = {};
+		}
+	}
+}
+</script>
+
+<style>
+
+</style>
